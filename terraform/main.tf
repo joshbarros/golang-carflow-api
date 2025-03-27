@@ -46,7 +46,7 @@ resource "google_cloud_run_service" "carflow" {
         resources {
           limits = {
             cpu    = "1"
-            memory = "128Mi"
+            memory = "128Mi" # Updated for free tier
           }
         }
         
