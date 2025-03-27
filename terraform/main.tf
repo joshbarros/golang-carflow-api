@@ -5,10 +5,6 @@ terraform {
       version = "~> 4.0"
     }
   }
-  backend "gcs" {
-    bucket = "carflow-terraform-state"
-    prefix = "terraform/state"
-  }
 }
 
 provider "google" {
@@ -45,12 +41,12 @@ resource "google_cloud_run_service" "carflow" {
   template {
     spec {
       containers {
-        image = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.carflow_repo.repository_id}/carflow:latest"
+        image = "us-docker.pkg.dev/cloudrun/container/hello"
         
         resources {
           limits = {
-            cpu    = "1000m"
-            memory = "256Mi"
+            cpu    = "1"
+            memory = "128Mi"
           }
         }
         
@@ -58,10 +54,6 @@ resource "google_cloud_run_service" "carflow" {
           container_port = 8080
         }
         
-        env {
-          name  = "PORT"
-          value = "8080"
-        }
       }
     }
   }
