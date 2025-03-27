@@ -1,0 +1,43 @@
+{{define "content"}}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">{{.Car.Make}} {{.Car.Model}}</h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">ID:</div>
+                    <div class="col-md-8">{{.Car.ID}}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Make:</div>
+                    <div class="col-md-8">{{.Car.Make}}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Model:</div>
+                    <div class="col-md-8">{{.Car.Model}}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Year:</div>
+                    <div class="col-md-8">{{.Car.Year}}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Color:</div>
+                    <div class="col-md-8">
+                        <span class="badge" style="background-color: {{.Car.Color}};">&nbsp;</span>
+                        {{.Car.Color}}
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group">
+                    <a href="/cars" class="btn btn-secondary">Back to List</a>
+                    <a href="/cars/edit/{{.Car.ID}}" class="btn btn-primary">Edit</a>
+                    <a href="/cars/delete/{{.Car.ID}}" class="btn btn-danger">Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}} 

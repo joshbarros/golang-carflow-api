@@ -1,0 +1,45 @@
+{{define "content"}}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0">Add New Car</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" action="/cars/new">
+                    <div class="mb-3">
+                        <label for="id" class="form-label">ID</label>
+                        <input type="text" class="form-control" id="id" name="id" placeholder="Enter a unique ID (optional)">
+                        <div class="form-text">If left blank, a unique ID will be generated.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="make" class="form-label">Make</label>
+                        <input type="text" class="form-control" id="make" name="make" required placeholder="e.g. Toyota, Honda, Tesla">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="model" class="form-label">Model</label>
+                        <input type="text" class="form-control" id="model" name="model" required placeholder="e.g. Corolla, Civic, Model 3">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="year" class="form-label">Year</label>
+                        <input type="number" class="form-control" id="year" name="year" required min="1900" max="2100" placeholder="e.g. 2020">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Color</label>
+                        <input type="text" class="form-control" id="color" name="color" required placeholder="e.g. red, blue, white">
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/cars" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-success">Create Car</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}} 
