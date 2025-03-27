@@ -1,0 +1,45 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/pages.yml'
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: false
+        tags: carflow:latest
+        outputs: type=docker,dest=/tmp/carflow.tar
+        
+    - name: Upload Docker image as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: carflow-docker-image
+        path: /tmp/carflow.tar
+        retention-days: 1
+        
+    - name: Test image functionality
+      run: |
+        docker load --input /tmp/carflow.tar
+        docker run -d -p 8080:8080 --name carflow-test carflow:latest
+        sleep 5
+        curl -f http://localhost:8080/healthz || exit 1
+        docker stop carflow-test
+        docker rm carflow-test 
