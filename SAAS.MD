@@ -1,197 +1,138 @@
-# 🚀 CarFlow SaaS Roadmap
+# 📄 **CarFlow Hub — Product Requirements Document (PRD)**
 
-## ✅ Current Achievements
+## 🧠 Product Vision
 
-### 🌐 API & Backend
-- [x] 🏗️ Complete Go API with CRUD operations
-- [x] 🔍 Advanced filtering, sorting, and pagination
-- [x] 📊 Basic metrics and monitoring
-- [x] 🧪 Comprehensive testing suite
-- [x] 📄 API documentation and OpenAPI specification
-- [x] 🔄 Rate limiting and error handling
+> Build a lightweight, no-friction SaaS for small and mid-sized **auto repair shops in the US** who still rely on spreadsheets, whiteboards, or outdated systems.
 
-### ☁️ Cloud Infrastructure
-- [x] ☁️ Successfully deployed to Google Cloud Run
-- [x] 🛠️ Infrastructure as Code with Terraform
-- [x] 💰 Configured for free tier (1 CPU, 128Mi, min instances=0)
-- [x] 🔐 Secure authentication with service accounts
-- [x] 🔄 Auto-scaling configuration (0-1 instances)
-- [x] 📦 Docker containerization
+**Goal:**  
+Replace chaos with clarity by offering a simple tool to **track vehicles, schedule services, and keep customers coming back** — without overwhelming the business owner or the solo founder maintaining it.
 
-### 🔄 DevOps & CI/CD
-- [x] 🔄 GitHub repository setup
-- [x] 🔄 Basic GitHub Actions workflow
-- [x] 🔧 Makefile for local development
-- [x] 🐳 Docker and Docker Compose for local development
+## 🎯 Target Audience
 
-### 🔧 Testing Tools
-- [x] 🧪 Insomnia collection for API testing
+- 🇺🇸 **Small auto repair shop owners** (1–10 staff)
+- Independent shops struggling with administrative overhead
+- Technicians spending too much time on paperwork instead of repairs
+- Owners looking for affordable solutions ($20-50/month range)
+- Businesses losing customers due to inconsistent follow-up
+- Shops with 50-300 regular customers in their database
 
-## 🔮 Future SaaS Enhancements
+## 💡 Core Features (MVP Scope)
 
-### 💾 Data Persistence & Storage
-- [ ] 🗃️ Implement PostgreSQL database for persistent storage
-- [ ] 🔄 Database migrations system
-- [ ] 🔐 Add data encryption for sensitive information
-- [ ] 🔧 Implement connection pooling
-- [ ] 📊 Add database performance monitoring
-- [ ] 🔄 Setup regular backups
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| 🔐 **Authentication** | Supabase Auth with email/password login and optional Google OAuth | High |
+| 🧑‍🔧 **User Isolation** | Multi-tenant architecture with complete data separation per business | High |
+| 🚗 **Vehicle Inventory** | Register cars by plate, brand, model, year, color, VIN, and owner details | High |
+| 👥 **Customer Management** | Store customer contact info, service history, and preferences | High |
+| 📆 **Service Scheduling** | Calendar view with drag-and-drop appointment setting and status tracking | High |
+| 🕒 **Upcoming Services** | Dashboard widget showing pending appointments with priority indicators | High |
+| 📝 **Service History** | Complete vehicle service logs with parts, labor, and technician notes | Medium |
+| 📬 **Email Reminders** | Automatic service reminders via Brevo with customizable templates | Medium |
+| 💬 **SMS Notifications** | Optional text alerts for appointment confirmations and status updates (Pro plan) | Low |
+| 💳 **Billing System** | Stripe subscription with seamless upgrades, downgrades, and cancelation | High |
+| 📊 **Business Dashboard** | KPIs showing vehicle count, appointment load, revenue trends, and customer retention | Medium |
+| 🔍 **Search & Filtering** | Quick lookup by plate number, customer name, or service type | Medium |
+| ⚙️ **Self-service Portal** | Comprehensive documentation, video tutorials, and FAQ section | Medium |
+| 🌐 **Landing Page** | Conversion-optimized marketing site with benefits, pricing, and testimonials | High |
+| 📱 **Responsive Design** | Mobile-friendly interface that works on tablets and smartphones | High |
 
-### 👤 User Management & Authentication
-- [ ] 👥 Multi-tenant architecture
-- [ ] 🔐 User authentication with JWT
-- [ ] 🔑 Role-based access control (RBAC)
-- [ ] 🔒 OAuth2 integration (Google, GitHub, etc.)
-- [ ] 📱 Two-factor authentication (2FA)
-- [ ] 🔐 Password policies and security measures
-- [ ] 🔄 Session management
+## 💰 Pricing Strategy
 
-### 💰 Payment Integration (Stripe)
-- [ ] 💳 Stripe API integration
-- [ ] 💲 Implement subscription plans
-- [ ] 📊 Usage-based billing
-- [ ] 📄 Invoice generation
-- [ ] 🔄 Payment webhooks
-- [ ] 💰 Billing dashboard for users
-- [ ] 💸 Free trial management
-- [ ] 📊 Revenue analytics
+| Plan | Price | Features | Limits |
+|------|-------|----------|--------|
+| **Starter** | $29/mo | • All core features<br>• Email reminders<br>• Basic dashboard<br>• Standard support | • 1 user account<br>• Up to 50 vehicles<br>• 100 email reminders/mo |
+| **Pro** | $49/mo | • Everything in Starter<br>• SMS notifications<br>• Advanced reporting<br>• Customizable templates<br>• Priority support | • Up to 3 user accounts<br>• Up to 200 vehicles<br>• 500 email reminders/mo<br>• 100 SMS/mo |
+| **Enterprise** | $99/mo | • Everything in Pro<br>• White-labeling<br>• API access<br>• Custom integrations<br>• Dedicated account manager | • Up to 10 user accounts<br>• Unlimited vehicles<br>• 2,000 email reminders/mo<br>• 500 SMS/mo |
 
-### 📧 Email & Notifications (Brevo/Twilio)
-- [ ] 📧 Brevo integration for transactional emails
-- [ ] 📱 Twilio integration for SMS notifications
-- [ ] 📊 Email analytics and tracking
-- [ ] 📅 Scheduled notifications
-- [ ] 🔔 In-app notification system
-- [ ] 📨 Email templates and customization
-- [ ] 📱 Push notifications for mobile
+**Annual Discount:** 20% off for yearly subscriptions
 
-### 📱 Frontend Application
-- [ ] 🎨 React frontend
-- [ ] 📱 Responsive design for all devices
-- [ ] 🌙 Dark/light mode
-- [ ] 🔍 Advanced search functionality
-- [ ] 📊 Dashboard with analytics
-- [ ] 🔄 Real-time updates
-- [ ] 📱 Progressive Web App (PWA) capabilities
+## 🧱 Tech Stack
 
-### 📊 Observability & Monitoring
-- [ ] 📈 Implement OpenTelemetry for tracing
-- [ ] 📊 Set up Prometheus for metrics
-- [ ] 📋 Grafana dashboards
-- [ ] 🔔 Alerting system
-- [ ] 📝 Structured logging with Elasticsearch
-- [ ] 📊 Kibana for log visualization
-- [ ] 🔍 Error tracking with Sentry
-- [ ] 📈 User behavior analytics
+| Layer | Technology | Justification |
+|-------|------------|---------------|
+| **Frontend** | React SPA with Tailwind CSS | Fast development, mobile-responsive, lightweight |
+| **UI Framework** | Lovable.dev components | Pre-built components save development time |
+| **Deployment** | Vercel (frontend), Cloud Run (API) | Scalable, reliable, low maintenance |
+| **Backend** | Golang API with Chi router | High performance, low resource usage |
+| **Database** | PostgreSQL via Supabase | Robust relational DB with excellent tooling |
+| **Authentication** | Supabase Auth (Pro Plan) | Secure, pre-built auth flows with minimal setup |
+| **Payments** | Stripe with webhook integration | Industry standard payment processing |
+| **Email** | Brevo (free 300/day tier) | Reliable email delivery with analytics |
+| **SMS** | Twilio (Pro/Enterprise plans) | Industry standard SMS delivery |
+| **Infrastructure** | Terraform with modular configuration | Infrastructure-as-code for predictable deployments |
+| **CI/CD** | GitHub Actions with automated testing | Automated build/test/deploy pipeline |
+| **Monitoring** | Google Cloud Monitoring + Sentry | Error tracking and performance monitoring |
+| **Analytics** | Simple Analytics (privacy-focused) | Understanding user behavior without cookies |
 
-### 🔄 Advanced CI/CD
-- [ ] 🔄 Implement trunk-based development
-- [ ] 🔄 Automated canary deployments
-- [ ] 🧪 End-to-end testing in CI
-- [ ] 🔐 Security scanning in CI
-- [ ] 📊 Performance testing in CI
-- [ ] 🔄 Automated database migrations in deployment
-- [ ] 📝 Release notes automation
+## 🛡️ Non-Goals / What's Out (for now)
 
-### 🚀 Performance Optimizations
-- [ ] 🚀 Implement Redis for caching
-- [ ] 🔄 CDN integration for static assets
-- [ ] 🚀 API response compression
-- [ ] 📊 Performance monitoring
-- [ ] 🔄 Rate limiting per user/tenant
-- [ ] 🚀 Database query optimization
-- [ ] 🔄 Background job processing
+- ❌ **Native mobile app** — Focusing on responsive web experience first
+- ❌ **AI/ML features** — Avoiding complexity and potential privacy concerns
+- ❌ **Advanced analytics** — Basic reporting is sufficient for initial market fit
+- ❌ **Chatbots or live chat** — Maintaining low-touch support model
+- ❌ **Multi-language support** — US market focus (English only)
+- ❌ **On-premise deployment** — Cloud-only to simplify maintenance
+- ❌ **Inventory management** — Focusing on scheduling, not parts tracking
+- ❌ **Accounting integration** — No QuickBooks/Xero connections initially
+- ❌ **Online booking portal** — Starting with shop-side management only
 
-### 🌐 Scaling & High Availability
-- [ ] 🌐 Multi-region deployment
-- [ ] 🔄 Load balancing
-- [ ] 🚀 Auto-scaling for high demand
-- [ ] 🔄 Database read replicas
-- [ ] 🚀 Edge caching
-- [ ] 🌐 Global CDN distribution
-- [ ] 🔄 Circuit breakers for service resilience
+## 🚀 Launch Plan
 
-### 🔐 Security Enhancements
-- [ ] 🔐 Regular security audits
-- [ ] 🔒 API key management
-- [ ] 🔐 OWASP top 10 vulnerability scanning
-- [ ] 🔒 DDoS protection
-- [ ] 🔐 Data retention policies
-- [ ] 🔒 GDPR/CCPA compliance features
-- [ ] 🔐 Penetration testing
-- [ ] 🔒 Security headers implementation
+| Phase | Timeline | Key Deliverables | Success Metrics |
+|-------|----------|------------------|-----------------|
+| **Research & Design** | Days 1-5 | • User interviews<br>• Competitor analysis<br>• UI/UX wireframes<br>• Data schema design | • 5+ user interviews completed<br>• Design system established |
+| **MVP Development** | Days 6-20 | • Authentication system<br>• Vehicle & customer database<br>• Basic scheduling<br>• Simple dashboard<br>• Stripe integration | • Core functionality working<br>• Test accounts created<br>• Payment processing verified |
+| **Beta Testing** | Days 21-30 | • Onboarding 5-10 beta users<br>• Collecting feedback<br>• Fixing critical issues<br>• Implementing high-priority requests | • 5+ active beta users<br>• Initial feedback collected<br>• Major bugs resolved |
+| **Public Launch** | Days 31-40 | • Marketing site live<br>• Documentation completed<br>• Email sequences set up<br>• Initial SEO implementation | • First 5 paying customers<br>• < 5% error rate in production |
+| **Growth Phase** | Days 41-90 | • Targeted outreach to repair shops<br>• Content marketing (blog, guides)<br>• Referral program setup<br>• Customer success stories | • 50 paying customers<br>• $1,000+ MRR |
 
-### 🌟 Advanced Features
-- [ ] 🔄 Webhooks for integrations
-- [ ] 🤖 API client SDKs for various languages
-- [ ] 📊 Advanced analytics dashboard
-- [ ] 🔄 Batch processing
-- [ ] 📝 Export/import functionality
-- [ ] 🌐 Multi-language support
-- [ ] 🤖 AI-powered recommendations
-- [ ] 📱 Mobile app versions
+## 📊 KPIs & Success Metrics
 
-### 📝 Documentation & Support
-- [ ] 📝 Comprehensive developer documentation
-- [ ] 📖 User guides and tutorials
-- [ ] 🎥 Video tutorials
-- [ ] 💬 In-app chat support
-- [ ] 🤖 Knowledge base and FAQ
-- [ ] 🔧 Self-service troubleshooting tools
-- [ ] 🎫 Ticket support system
+| Metric | 30-Day Target | 90-Day Target | 180-Day Target |
+|--------|---------------|---------------|----------------|
+| **MRR** | $150 | $1,000 | $3,000 |
+| **Paying Users** | 5 | 50 | 120 |
+| **User Retention** | 90% | 92% | 95% |
+| **Monthly Churn** | < 10% | < 8% | < 5% |
+| **Infrastructure Cost** | < $5/mo | < $10/mo | < $25/mo |
+| **Support Tickets** | < 5/week | < 10/week | < 20/week |
+| **Feature Utilization** | 60% of features used | 75% of features used | 85% of features used |
+| **Customer Satisfaction** | > 4.0/5.0 | > 4.2/5.0 | > 4.5/5.0 |
 
-## 📊 GCP Services to Leverage (Free Credit Optimization)
+## 🔄 Integration Opportunities (Future)
 
-### Core Services
-- [ ] 🔄 Cloud Run (already implemented)
-- [ ] 💾 Cloud SQL for PostgreSQL
-- [ ] 🔐 Secret Manager for credentials
-- [ ] 📊 Cloud Monitoring
-- [ ] 📝 Cloud Logging
+- **Payment Processors** — Integration with Square, Clover for in-shop payments
+- **Parts Suppliers** — API connections to parts distributors for inventory/ordering
+- **Accounting Software** — QuickBooks/Xero integration for financial tracking
+- **Marketing Tools** — Campaign management for customer retention
+- **Digital Vehicle Inspection** — Photo/video documentation of vehicle issues
 
-### Additional Services
-- [ ] 🔄 Cloud Pub/Sub for event-driven architecture
-- [ ] 🔍 Cloud Memorystore (Redis) for caching
-- [ ] 🔄 Cloud Tasks for background processing
-- [ ] 🔐 Identity Platform for authentication
-- [ ] 📦 Cloud Storage for file storage
-- [ ] 🔍 Cloud CDN for content delivery
-- [ ] 🤖 Cloud Functions for microservices
+## 🛣️ Roadmap (Post-MVP)
 
-## 🔄 Implementation Plan (90-day Timeline)
+| Quarter | Key Initiatives |
+|---------|----------------|
+| **Q2 2025** | • Customer portal for appointment requests<br>• Enhanced reporting and analytics<br>• Digital vehicle inspections with photo uploads |
+| **Q3 2025** | • Parts inventory management<br>• QuickBooks/Xero integration<br>• Technician mobile companion app |
+| **Q4 2025** | • Online booking widget for shop websites<br>• Multi-location support<br>• Advanced customer loyalty program |
+| **Q1 2026** | • Business intelligence dashboard<br>• White-label mobile app option<br>• Integration marketplace |
 
-### 🚀 Phase 1: Core SaaS Foundation (Days 1-30)
-- [ ] 💾 Implement PostgreSQL database
-- [ ] 👥 Build authentication system
-- [ ] 🔐 Set up multi-tenancy
-- [ ] 📝 Create basic frontend with React
-- [ ] 📊 Enhance observability with Prometheus/Grafana
+## ✅ Why This Product Works
 
-### 💰 Phase 2: Monetization & Communication (Days 31-60)
-- [ ] 💳 Integrate Stripe for payments
-- [ ] 📧 Implement Brevo for email communication
-- [ ] 📱 Add Twilio for SMS notifications
-- [ ] 📊 Build billing dashboard
-- [ ] 🔄 Set up subscription management
+- **Solves a real pain point:** Replaces disorganized, manual processes with digital efficiency
+- **Targeted niche market:** Focused on underserved small repair shops, not competing with enterprise solutions
+- **Low barrier to adoption:** Simple onboarding with minimal training required
+- **Clear value proposition:** Measurable improvements in customer retention and operational efficiency
+- **Sustainable business model:** Predictable subscription revenue with controlled operating costs
+- **Solo-founder friendly:** Intentionally designed for low maintenance and support burden
+- **Scalable architecture:** Can grow from 50 to 5,000 customers without major infrastructure changes
+- **Differentiated offering:** Simpler and more affordable than bloated competitors
 
-### 🌟 Phase 3: Advanced Features & Scaling (Days 61-90)
-- [ ] 🚀 Implement caching with Redis
-- [ ] 🌐 Optimize for global distribution
-- [ ] 🔄 Build webhook system for integrations
-- [ ] 📊 Create advanced analytics dashboard
-- [ ] 🔐 Conduct security audit and optimizations
+## 🛠️ Technical Considerations
 
-## 📈 Key Metrics to Track
-
-- [ ] 📊 User acquisition and retention
-- [ ] 💰 Monthly Recurring Revenue (MRR)
-- [ ] 📉 Churn rate
-- [ ] 🚀 API performance metrics
-- [ ] 💸 Cost per tenant
-- [ ] 🔧 Support ticket volume
-- [ ] 📱 Feature adoption rates
-- [ ] 📊 System uptime and reliability
-
----
-
-This roadmap outlines the journey from your current functional API to a fully-featured SaaS product. The plan maximizes your $300 GCP credit over 90 days while building a scalable, secure, and monetizable platform. The checkboxes allow you to track progress while the emojis add visual organization to the different categories of work. 
+- **Data Security:** HTTPS-only with encryption at rest for all customer data
+- **Backups:** Daily automated backups with 30-day retention
+- **Performance:** < 1 second page load times for critical workflows
+- **Availability:** 99.9% uptime target with monitoring and alerting
+- **Compliance:** GDPR-ready data handling even for US customers
+- **API Design:** RESTful API with future webhook capabilities
+- **Disaster Recovery:** Cross-region backup strategy with documented recovery procedures
