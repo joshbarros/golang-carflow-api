@@ -1,0 +1,72 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Go specific
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+/vendor/
+
+# Binary files
+/bin/
+/dist/
+*.bin
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+.history
+
+# Test binary, built with 'go test -c'
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.html
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+
+# Temporary files
+tmp/
+temp/
+
+# Log files
+*.log
+logs/
+
+# Database files
+*.db
+*.sqlite
+
+# Docker volumes
+docker/data/
+postgres-data/
+
+# Build output
+build/
+dist/
+
+# Debug files
+debug/
+
+# System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 
