@@ -1,142 +1,133 @@
 package middleware
 
 import (
-	"net"
+	"context"
+	"fmt"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
+
+	"github.com/joshbarros/golang-carflow-api/internal/interfaces"
+	"golang.org/x/time/rate"
 )
 
-// RateLimiter implements a simple token bucket rate limiter
+// RateLimiter manages rate limiting per tenant
 type RateLimiter struct {
-	clients    map[string]*client
-	rate       int // requests per second
-	burst      int // maximum burst size
-	mu         sync.Mutex
-	cleanupInt time.Duration // cleanup interval
-}
-
-// client tracks rate limiting state for a single client
-type client struct {
-	tokens     int
-	lastUpdate time.Time
+	limiters  map[string]*rate.Limiter
+	mu        sync.RWMutex
+	tenantSvc interfaces.TenantService
 }
 
 // NewRateLimiter creates a new rate limiter
-func NewRateLimiter(rate, burst int, cleanupInterval time.Duration) *RateLimiter {
-	limiter := &RateLimiter{
-		clients:    make(map[string]*client),
-		rate:       rate,
-		burst:      burst,
-		cleanupInt: cleanupInterval,
+func NewRateLimiter(tenantSvc interfaces.TenantService) *RateLimiter {
+	return &RateLimiter{
+		limiters:  make(map[string]*rate.Limiter),
+		tenantSvc: tenantSvc,
 	}
-
-	// Start cleanup goroutine
-	go limiter.cleanup(cleanupInterval)
-
-	return limiter
 }
 
-// Allow returns true if the client is allowed to make a request
-func (rl *RateLimiter) Allow(clientIP string) bool {
+// getLimiter returns a rate limiter for a tenant
+func (rl *RateLimiter) getLimiter(tenantID string) (*rate.Limiter, error) {
+	rl.mu.RLock()
+	limiter, exists := rl.limiters[tenantID]
+	rl.mu.RUnlock()
+
+	if exists {
+		return limiter, nil
+	}
+
+	// Get tenant configuration
+	t, err := rl.tenantSvc.GetTenant(tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tenant: %v", err)
+	}
+
+	// Create new limiter based on tenant's plan
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 
-	// Get or create client
-	c, exists := rl.clients[clientIP]
-	if !exists {
-		c = &client{
-			tokens:     rl.burst,
-			lastUpdate: time.Now(),
-		}
-		rl.clients[clientIP] = c
-	} else {
-		// Add tokens based on time elapsed
-		now := time.Now()
-		elapsed := now.Sub(c.lastUpdate)
-		c.lastUpdate = now
-
-		// Calculate tokens to add based on elapsed time and rate
-		newTokens := int(elapsed.Seconds() * float64(rl.rate))
-		if newTokens > 0 {
-			c.tokens += newTokens
-			if c.tokens > rl.burst {
-				c.tokens = rl.burst
-			}
-		}
+	// Check again in case another goroutine created it
+	if limiter, exists = rl.limiters[tenantID]; exists {
+		return limiter, nil
 	}
 
-	// Check if client has tokens
-	if c.tokens > 0 {
-		c.tokens--
-		return true
-	}
+	// Convert requests per minute to requests per second
+	rps := float64(t.Limits.APIRateLimit) / 60.0
+	limiter = rate.NewLimiter(rate.Limit(rps), int(rps)) // Burst size equals one second worth of requests
+	rl.limiters[tenantID] = limiter
 
-	return false
+	return limiter, nil
 }
 
-// TimeUntilRefill returns seconds until the next token is available
-func (rl *RateLimiter) TimeUntilRefill(clientIP string) int {
-	rl.mu.Lock()
-	defer rl.mu.Unlock()
-
-	c, exists := rl.clients[clientIP]
-	if !exists || c.tokens > 0 {
-		return 0 // No wait needed
-	}
-
-	// Calculate time needed for at least one token
-	secondsNeeded := 1
-	if rl.rate > 0 {
-		secondsNeeded = 1 / rl.rate
-		if secondsNeeded < 1 {
-			secondsNeeded = 1
+// Middleware creates a middleware that enforces rate limits
+func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get tenant ID from context
+		tenantID, ok := r.Context().Value(TenantIDContextKey).(string)
+		if !ok {
+			http.Error(w, "Unauthorized: Tenant ID not found", http.StatusUnauthorized)
+			return
 		}
-	}
 
-	return secondsNeeded
+		// Get limiter for tenant
+		limiter, err := rl.getLimiter(tenantID)
+		if err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		// Check if request is allowed
+		if !limiter.Allow() {
+			w.Header().Set("Retry-After", "60")
+			http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
-// cleanup removes clients that haven't been seen in a while
-func (rl *RateLimiter) cleanup(interval time.Duration) {
-	ticker := time.NewTicker(interval)
+// cleanupLimiters periodically removes unused limiters
+func (rl *RateLimiter) cleanupLimiters(ctx context.Context) {
+	ticker := time.NewTicker(1 * time.Hour)
 	defer ticker.Stop()
 
 	for {
-		<-ticker.C
-
-		rl.mu.Lock()
-		deadline := time.Now().Add(-interval * 3) // Remove clients after 3 intervals
-		for ip, client := range rl.clients {
-			if client.lastUpdate.Before(deadline) {
-				delete(rl.clients, ip)
-			}
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			rl.mu.Lock()
+			// In a production environment, you might want to track last usage time
+			// and only remove limiters that haven't been used for a while
+			rl.limiters = make(map[string]*rate.Limiter)
+			rl.mu.Unlock()
 		}
-		rl.mu.Unlock()
 	}
 }
 
-// RateLimitMiddleware creates a middleware that limits requests based on client IP
+// RateLimitMiddleware creates a middleware that limits requests based on tenant
 func RateLimitMiddleware(limiter *RateLimiter) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Get client IP
-			ip, _, err := net.SplitHostPort(r.RemoteAddr)
-			if err != nil {
-				ip = r.RemoteAddr // Fallback if SplitHostPort fails
+			// Get tenant ID from context
+			tenantID, ok := r.Context().Value(TenantIDContextKey).(string)
+			if !ok {
+				http.Error(w, "Unauthorized: Tenant ID not found", http.StatusUnauthorized)
+				return
 			}
 
-			// Check if client is allowed
-			if !limiter.Allow(ip) {
-				// Calculate retry time
-				retryAfter := limiter.TimeUntilRefill(ip)
+			// Get limiter for tenant
+			tenantLimiter, err := limiter.getLimiter(tenantID)
+			if err != nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
 
-				// Set headers
-				w.Header().Set("Content-Type", "application/json")
-				w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
-				w.WriteHeader(http.StatusTooManyRequests)
-				w.Write([]byte(`{"error":"Rate limit exceeded. Try again later."}`))
+			// Check if request is allowed
+			if !tenantLimiter.Allow() {
+				w.Header().Set("Retry-After", "60")
+				http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 				return
 			}
 

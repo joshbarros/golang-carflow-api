@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/joshbarros/golang-carflow-api/internal/middleware"
 )
 
 // Handler handles HTTP requests for car endpoints
@@ -22,15 +24,22 @@ func NewHandler(service *Service) *Handler {
 
 // RegisterRoutes registers the car endpoints to the given ServeMux
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /cars", h.handleGetAllCars)
-	mux.HandleFunc("GET /cars/{id}", h.handleGetCar)
-	mux.HandleFunc("POST /cars", h.handleCreateCar)
-	mux.HandleFunc("PUT /cars/{id}", h.handleUpdateCar)
-	mux.HandleFunc("DELETE /cars/{id}", h.handleDeleteCar)
+	mux.HandleFunc("GET /cars", h.HandleGetAllCars)
+	mux.HandleFunc("GET /cars/{id}", h.HandleGetCar)
+	mux.HandleFunc("POST /cars", h.HandleCreateCar)
+	mux.HandleFunc("PUT /cars/{id}", h.HandleUpdateCar)
+	mux.HandleFunc("DELETE /cars/{id}", h.HandleDeleteCar)
 }
 
-// handleGetAllCars handles GET /cars requests
-func (h *Handler) handleGetAllCars(w http.ResponseWriter, r *http.Request) {
+// HandleGetAllCars handles GET /cars requests
+func (h *Handler) HandleGetAllCars(w http.ResponseWriter, r *http.Request) {
+	// Get tenant ID from context
+	tenantID, ok := r.Context().Value(middleware.TenantIDContextKey).(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	// Extract query parameters for filtering
 	query := r.URL.Query()
 
@@ -45,7 +54,7 @@ func (h *Handler) handleGetAllCars(w http.ResponseWriter, r *http.Request) {
 	if yearStr := query.Get("year"); yearStr != "" {
 		year, err := strconv.Atoi(yearStr)
 		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid year parameter")
+			http.Error(w, "Invalid year parameter", http.StatusBadRequest)
 			return
 		}
 		filter.Year = year
@@ -71,7 +80,7 @@ func (h *Handler) handleGetAllCars(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if !validFields[sortField] {
-			respondWithError(w, http.StatusBadRequest, "Invalid sort field")
+			http.Error(w, "Invalid sort field", http.StatusBadRequest)
 			return
 		}
 
@@ -91,7 +100,7 @@ func (h *Handler) handleGetAllCars(w http.ResponseWriter, r *http.Request) {
 	if pageStr := query.Get("page"); pageStr != "" {
 		page, err := strconv.Atoi(pageStr)
 		if err != nil || page < 1 {
-			respondWithError(w, http.StatusBadRequest, "Invalid page parameter")
+			http.Error(w, "Invalid page parameter", http.StatusBadRequest)
 			return
 		}
 		pagination.Page = page
@@ -101,7 +110,7 @@ func (h *Handler) handleGetAllCars(w http.ResponseWriter, r *http.Request) {
 	if pageSizeStr := query.Get("page_size"); pageSizeStr != "" {
 		pageSize, err := strconv.Atoi(pageSizeStr)
 		if err != nil || pageSize < 1 || pageSize > 100 {
-			respondWithError(w, http.StatusBadRequest, "Invalid page_size parameter (must be between 1 and 100)")
+			http.Error(w, "Invalid page_size parameter (must be between 1 and 100)", http.StatusBadRequest)
 			return
 		}
 		pagination.PageSize = pageSize
@@ -110,71 +119,104 @@ func (h *Handler) handleGetAllCars(w http.ResponseWriter, r *http.Request) {
 	// Check if pagination is requested
 	if query.Get("pagination") == "false" {
 		// Get cars with filtering and sorting only (no pagination)
-		cars := h.service.GetFilteredCars(filter, sortOptions)
-		respondWithJSON(w, http.StatusOK, cars)
+		cars := h.service.GetFilteredCars(tenantID, filter, sortOptions)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(cars)
 	} else {
 		// Get cars with filtering, sorting, and pagination
-		result := h.service.GetPagedCars(filter, sortOptions, pagination)
-		respondWithJSON(w, http.StatusOK, result)
+		result := h.service.GetPagedCars(tenantID, filter, sortOptions, pagination)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(result)
 	}
 }
 
-// handleGetCar handles GET /cars/{id} requests
-func (h *Handler) handleGetCar(w http.ResponseWriter, r *http.Request) {
+// HandleGetCar handles GET /cars/{id} requests
+func (h *Handler) HandleGetCar(w http.ResponseWriter, r *http.Request) {
+	// Get tenant ID from context
+	tenantID, ok := r.Context().Value(middleware.TenantIDContextKey).(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	id := strings.TrimPrefix(r.URL.Path, "/cars/")
-	car, err := h.service.GetCar(id)
+	car, err := h.service.GetCar(id, tenantID)
 
 	if err != nil {
 		switch err {
 		case ErrNotFound:
-			respondWithError(w, http.StatusNotFound, "Car not found")
+			http.Error(w, "Car not found", http.StatusNotFound)
 		case ErrInvalidID:
-			respondWithError(w, http.StatusBadRequest, "Invalid car ID")
+			http.Error(w, "Invalid car ID", http.StatusBadRequest)
 		default:
-			respondWithError(w, http.StatusInternalServerError, "Internal server error")
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, car)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(car)
 }
 
-// handleCreateCar handles POST /cars requests
-func (h *Handler) handleCreateCar(w http.ResponseWriter, r *http.Request) {
-	var car Car
-	if err := json.NewDecoder(r.Body).Decode(&car); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+// HandleCreateCar handles POST /cars requests
+func (h *Handler) HandleCreateCar(w http.ResponseWriter, r *http.Request) {
+	// Only allow POST method
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	defer r.Body.Close()
 
+	// Get tenant ID from context
+	tenantID, ok := r.Context().Value(middleware.TenantIDContextKey).(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Parse request body
+	var car Car
+	if err := json.NewDecoder(r.Body).Decode(&car); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Set tenant ID
+	car.TenantID = tenantID
+
+	// Create car
 	createdCar, err := h.service.CreateCar(car)
 	if err != nil {
 		switch {
-		case strings.Contains(err.Error(), "ID is required") ||
-			strings.Contains(err.Error(), "make is required") ||
-			strings.Contains(err.Error(), "model is required") ||
-			strings.Contains(err.Error(), "year must be between") ||
-			strings.Contains(err.Error(), "color must be"):
-			respondWithError(w, http.StatusBadRequest, err.Error())
-		case strings.Contains(err.Error(), "already exists"):
-			respondWithError(w, http.StatusConflict, err.Error())
+		case err == ErrUnauthorized:
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		case strings.Contains(err.Error(), "validation"):
+			http.Error(w, err.Error(), http.StatusBadRequest)
 		default:
-			respondWithError(w, http.StatusInternalServerError, "Internal server error")
+			http.Error(w, "Failed to create car", http.StatusInternalServerError)
 		}
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, createdCar)
+	// Return created car
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(createdCar)
 }
 
-// handleUpdateCar handles PUT /cars/{id} requests
-func (h *Handler) handleUpdateCar(w http.ResponseWriter, r *http.Request) {
+// HandleUpdateCar handles PUT /cars/{id} requests
+func (h *Handler) HandleUpdateCar(w http.ResponseWriter, r *http.Request) {
+	// Get tenant ID from context
+	tenantID, ok := r.Context().Value(middleware.TenantIDContextKey).(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	idPattern := regexp.MustCompile(`/cars/([^/]+)$`)
 	matches := idPattern.FindStringSubmatch(r.URL.Path)
 
 	if len(matches) < 2 {
-		respondWithError(w, http.StatusBadRequest, "Invalid car ID")
+		http.Error(w, "Invalid car ID", http.StatusBadRequest)
 		return
 	}
 
@@ -182,60 +224,67 @@ func (h *Handler) handleUpdateCar(w http.ResponseWriter, r *http.Request) {
 
 	var car Car
 	if err := json.NewDecoder(r.Body).Decode(&car); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
-	// Ensure the ID in the URL matches the ID in the body
+	// Set ID and tenant ID
 	car.ID = id
+	car.TenantID = tenantID
 
 	updatedCar, err := h.service.UpdateCar(car)
 	if err != nil {
 		switch {
+		case err == ErrUnauthorized:
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		case err == ErrNotFound:
-			respondWithError(w, http.StatusNotFound, "Car not found")
-		case strings.Contains(err.Error(), "ID is required") ||
-			strings.Contains(err.Error(), "make is required") ||
-			strings.Contains(err.Error(), "model is required") ||
-			strings.Contains(err.Error(), "year must be between") ||
-			strings.Contains(err.Error(), "color must be"):
-			respondWithError(w, http.StatusBadRequest, err.Error())
+			http.Error(w, "Car not found", http.StatusNotFound)
+		case strings.Contains(err.Error(), "validation"):
+			http.Error(w, err.Error(), http.StatusBadRequest)
 		default:
-			respondWithError(w, http.StatusInternalServerError, "Internal server error")
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, updatedCar)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updatedCar)
 }
 
-// handleDeleteCar handles DELETE /cars/{id} requests
-func (h *Handler) handleDeleteCar(w http.ResponseWriter, r *http.Request) {
+// HandleDeleteCar handles DELETE /cars/{id} requests
+func (h *Handler) HandleDeleteCar(w http.ResponseWriter, r *http.Request) {
+	// Get tenant ID from context
+	tenantID, ok := r.Context().Value(middleware.TenantIDContextKey).(string)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	idPattern := regexp.MustCompile(`/cars/([^/]+)$`)
 	matches := idPattern.FindStringSubmatch(r.URL.Path)
 
 	if len(matches) < 2 {
-		respondWithError(w, http.StatusBadRequest, "Invalid car ID")
+		http.Error(w, "Invalid car ID", http.StatusBadRequest)
 		return
 	}
 
 	id := matches[1]
 
-	err := h.service.DeleteCar(id)
+	err := h.service.DeleteCar(id, tenantID)
 	if err != nil {
-		switch err {
-		case ErrNotFound:
-			respondWithError(w, http.StatusNotFound, "Car not found")
-		case ErrInvalidID:
-			respondWithError(w, http.StatusBadRequest, "Invalid car ID")
+		switch {
+		case err == ErrUnauthorized:
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		case err == ErrNotFound:
+			http.Error(w, "Car not found", http.StatusNotFound)
+		case err == ErrInvalidID:
+			http.Error(w, "Invalid car ID", http.StatusBadRequest)
 		default:
-			respondWithError(w, http.StatusInternalServerError, "Internal server error")
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 		}
 		return
 	}
 
-	// Return 204 No Content on successful deletion
 	w.WriteHeader(http.StatusNoContent)
 }
 

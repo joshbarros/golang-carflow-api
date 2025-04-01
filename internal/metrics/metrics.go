@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"net/http"
 	"sync"
 	"time"
 )
@@ -112,4 +113,46 @@ func calculateTimeStats(times []time.Duration) map[string]interface{} {
 		"avg":   avg.String(),
 		"count": len(times),
 	}
+}
+
+// MetricsMiddleware creates a middleware that tracks request metrics
+func MetricsMiddleware(metrics *Metrics) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+
+			// Create a response writer wrapper to capture the status code
+			rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+
+			// Process the request
+			next.ServeHTTP(rw, r)
+
+			// Record metrics
+			duration := time.Since(start)
+			metrics.IncrementRequestCount()
+			if rw.statusCode >= 400 {
+				metrics.IncrementErrorCount()
+			}
+			metrics.AddResponseTime(duration)
+			metrics.AddRequestInfo(RequestInfo{
+				Path:      r.URL.Path,
+				Method:    r.Method,
+				Status:    rw.statusCode,
+				Duration:  duration,
+				Timestamp: start,
+			})
+		})
+	}
+}
+
+// responseWriter wraps http.ResponseWriter to capture the status code
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+// WriteHeader captures the status code and passes it to the underlying ResponseWriter
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
 }

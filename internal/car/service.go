@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -12,6 +14,8 @@ var (
 	ErrInvalidCar = errors.New("invalid car data")
 	// ErrIDGeneration is returned when an ID couldn't be generated
 	ErrIDGeneration = errors.New("failed to generate ID")
+	// ErrUnauthorized is returned when tenant_id is missing or unauthorized
+	ErrUnauthorized = errors.New("unauthorized: invalid tenant access")
 )
 
 // FilterOptions contains options for filtering cars
@@ -55,20 +59,30 @@ func NewService(repo Repository) *Service {
 	}
 }
 
-// GetCar retrieves a car by ID
-func (s *Service) GetCar(id string) (Car, error) {
-	return s.repo.Get(id)
+// GetCar retrieves a car by ID for a specific tenant
+func (s *Service) GetCar(id string, tenantID string) (Car, error) {
+	if tenantID == "" {
+		return Car{}, ErrUnauthorized
+	}
+	return s.repo.Get(id, tenantID)
 }
 
-// GetAllCars retrieves all cars
-func (s *Service) GetAllCars() []Car {
-	return s.repo.GetAll()
+// GetAllCars retrieves all cars for a specific tenant
+func (s *Service) GetAllCars(tenantID string) []Car {
+	if tenantID == "" {
+		return nil
+	}
+	return s.repo.GetAll(tenantID)
 }
 
-// GetFilteredCars retrieves cars with filtering and sorting
-func (s *Service) GetFilteredCars(filter FilterOptions, sort *SortOptions) []Car {
-	// Get all cars
-	cars := s.repo.GetAll()
+// GetFilteredCars retrieves cars with filtering and sorting for a specific tenant
+func (s *Service) GetFilteredCars(tenantID string, filter FilterOptions, sort *SortOptions) []Car {
+	if tenantID == "" {
+		return nil
+	}
+
+	// Get all cars for the tenant
+	cars := s.repo.GetAll(tenantID)
 
 	// Apply filters
 	cars = applyFilters(cars, filter)
@@ -81,10 +95,20 @@ func (s *Service) GetFilteredCars(filter FilterOptions, sort *SortOptions) []Car
 	return cars
 }
 
-// GetPagedCars retrieves cars with filtering, sorting, and pagination
-func (s *Service) GetPagedCars(filter FilterOptions, sort *SortOptions, pagination PaginationOptions) PagedResult {
-	// Get filtered and sorted cars
-	filteredCars := s.GetFilteredCars(filter, sort)
+// GetPagedCars retrieves cars with filtering, sorting, and pagination for a specific tenant
+func (s *Service) GetPagedCars(tenantID string, filter FilterOptions, sort *SortOptions, pagination PaginationOptions) PagedResult {
+	if tenantID == "" {
+		return PagedResult{
+			Data:       []Car{},
+			TotalItems: 0,
+			TotalPages: 0,
+			Page:       1,
+			PageSize:   pagination.PageSize,
+		}
+	}
+
+	// Get filtered and sorted cars for the tenant
+	filteredCars := s.GetFilteredCars(tenantID, filter, sort)
 
 	// Total items and pages
 	totalItems := len(filteredCars)
@@ -135,8 +159,18 @@ func (s *Service) GetPagedCars(filter FilterOptions, sort *SortOptions, paginati
 	}
 }
 
-// CreateCar creates a new car, validating the data
+// CreateCar creates a new car, validating the data and tenant
 func (s *Service) CreateCar(car Car) (Car, error) {
+	// Validate tenant_id
+	if car.TenantID == "" {
+		return Car{}, ErrUnauthorized
+	}
+
+	// Generate UUID for new cars
+	if car.ID == "" {
+		car.ID = uuid.New().String()
+	}
+
 	if err := validateCar(car); err != nil {
 		return Car{}, err
 	}
@@ -144,8 +178,13 @@ func (s *Service) CreateCar(car Car) (Car, error) {
 	return s.repo.Create(car)
 }
 
-// UpdateCar updates an existing car, validating the data
+// UpdateCar updates an existing car, validating the data and tenant
 func (s *Service) UpdateCar(car Car) (Car, error) {
+	// Validate tenant_id
+	if car.TenantID == "" {
+		return Car{}, ErrUnauthorized
+	}
+
 	if err := validateCar(car); err != nil {
 		return Car{}, err
 	}
@@ -153,13 +192,21 @@ func (s *Service) UpdateCar(car Car) (Car, error) {
 	return s.repo.Update(car)
 }
 
-// DeleteCar deletes a car by ID
-func (s *Service) DeleteCar(id string) error {
-	return s.repo.Delete(id)
+// DeleteCar deletes a car by ID for a specific tenant
+func (s *Service) DeleteCar(id string, tenantID string) error {
+	if tenantID == "" {
+		return ErrUnauthorized
+	}
+	return s.repo.Delete(id, tenantID)
 }
 
 // validateCar checks if car data is valid
 func validateCar(car Car) error {
+	// Validate tenant_id
+	if car.TenantID == "" {
+		return errors.New("tenant_id is required")
+	}
+
 	// ID must be present and in a valid format
 	if car.ID == "" {
 		return errors.New("ID is required")

@@ -1,0 +1,16 @@
+-- +migrate Up
+CREATE TABLE IF NOT EXISTS cars (
+    id UUID PRIMARY KEY,
+    make VARCHAR(100) NOT NULL,
+    model VARCHAR(100) NOT NULL,
+    year INTEGER NOT NULL,
+    color VARCHAR(50) NOT NULL,
+    tenant_id VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_cars_tenant_id ON cars(tenant_id);
+
+-- +migrate Down
+DROP TABLE IF EXISTS cars; 

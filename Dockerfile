@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -23,7 +23,6 @@ WORKDIR /app
 # Copy the binary from the builder stage
 COPY --from=builder /app/carflow .
 COPY --from=builder /app/docs /app/docs
-COPY --from=builder /app/public /app/public
 
 # Expose the application port
 EXPOSE 8080
