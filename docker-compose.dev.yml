@@ -1,0 +1,103 @@
+version: '3.8'
+
+# Development Docker Compose - extends docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # PostgreSQL with exposed ports and persistence
+  postgres:
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: carflow
+      POSTGRES_PASSWORD: carflow123
+      POSTGRES_DB: carflow
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./apps/api/migrations:/migrations:ro
+
+  # Redis with exposed ports
+  redis:
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+
+  # API with development settings
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+      target: builder  # Use builder stage for development
+    environment:
+      # Override for development
+      APP_ENV: development
+      DEBUG: "true"
+      LOG_LEVEL: debug
+
+      # Auto-migrate on startup
+      AUTO_MIGRATE: "true"
+      SEED_DEMO_DATA: "true"
+
+      # Development JWT secret
+      JWT_SECRET: dev-secret-key-not-for-production
+
+      # Disable rate limiting in dev
+      RATE_LIMIT_ENABLED: "false"
+
+      # CORS allow all in dev
+      CORS_ALLOWED_ORIGINS: "*"
+    volumes:
+      # Mount source code for live reload (if using air or similar)
+      - ./apps/api:/app/src:ro
+    ports:
+      - "8080:8080"
+      - "2345:2345"  # Delve debugger port
+
+  # PgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: carflow-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@carflow.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - carflow-network
+    depends_on:
+      - postgres
+
+  # Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: carflow-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - carflow-network
+    depends_on:
+      - redis
+
+  # Mailhog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: carflow-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - carflow-network
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+  pgadmin_data:

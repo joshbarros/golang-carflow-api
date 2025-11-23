@@ -1,341 +1,456 @@
-# 🚗 CarFlow API
+# 🚗 CarFlow - B2B SaaS for Car Dealerships
 
-A simple, lightweight car management microservice built with Go standard library only.
+**A modern, cloud-ready fleet management platform built for car dealerships, rental companies, and fleet managers.**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Version](https://img.shields.io/badge/Go-1.22+-blue.svg)](https://golang.org)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
+
+---
 
 ## 📋 Overview
 
-CarFlow is a RESTful API microservice that allows management of car entities. It's built using only Go's standard library (`net/http`) with no external dependencies, and demonstrates modern software practices including testing, CI/CD, and observability.
+CarFlow is a **multi-tenant B2B SaaS platform** that enables car dealerships to manage their entire inventory in the cloud. Built with Go and PostgreSQL, it features JWT authentication, role-based access control, subscription management, and a comprehensive API.
+
+### 🎯 **Built For:**
+- 🏢 Independent car dealerships
+- 🚗 Car rental companies
+- 🚚 Fleet management companies
+- 🏭 Wholesale auto auctions
+
+---
 
 ## 🌟 Features
 
-- **CRUD Operations** for car entities
-- **In-Memory Storage** using Go maps
-- **RESTful API** with JSON responses
-- **OpenAPI Documentation**
-- **Command-Line Interface** for API interaction
-- **Web UI** built with Go standard library templates
-- **Observability** with logging and custom metrics
-- **Health Checks** for monitoring system status
-- **Rate Limiting** to prevent abuse
-- **Caching** for improved performance
-- **ETag Support** for resource versioning
-- **Automated Testing** using Go's testing packages
-- **CI/CD Pipeline** with GitHub Actions
-- **Cloud Deployment** using GCP free tier
+### Core Functionality
+- ✅ **Multi-tenant Architecture** - Complete data isolation per dealership
+- ✅ **Advanced Vehicle Management** - VIN, stock numbers, pricing, mileage, status tracking
+- ✅ **JWT Authentication** - Secure, stateless authentication
+- ✅ **Role-Based Access Control** - Owner, Admin, Member roles
+- ✅ **PostgreSQL Database** - Production-ready persistence with migrations
+- ✅ **RESTful API** - Clean, documented JSON API
+- ✅ **Filtering & Pagination** - Advanced search capabilities
+- ✅ **Audit Logs** - Complete change history tracking
 
-## 🔧 Tech Stack
+### SaaS Features
+- 🔐 **API Key Management** - Programmatic access for integrations
+- 💳 **Subscription Management** - Stripe-ready billing system
+- 📊 **Usage Tracking** - Monitor API calls and resource usage
+- 📧 **Email Integration** - Brevo-ready for transactional emails
+- 📈 **Analytics Dashboard** - Built-in metrics and monitoring
+- 🔒 **Security** - Password hashing, rate limiting, CORS
 
-- **Backend**: Go (standard library only)
-- **API**: RESTful JSON API using `net/http`
-- **Storage**: In-memory map
-- **Documentation**: OpenAPI 3.0
-- **Testing**: Go testing package
-- **CI/CD**: GitHub Actions
-- **Cloud**: Google Cloud Run (free tier)
+### Developer Experience
+- 🐳 **Docker Compose** - One-command development setup
+- 📝 **Database Migrations** - Automated schema management
+- 🧪 **Comprehensive Tests** - Unit and integration testing
+- 📖 **OpenAPI Documentation** - Interactive API docs
+- 🛠️ **CLI Tools** - Command-line interface included
+- 🎨 **Web UI** - Built-in management interface
 
-## 🚀 Getting Started
+---
+
+## 🏗️ Architecture
+
+```
+CarFlow SaaS (NX Monorepo)
+├── apps/
+│   ├── api/                    # Go Backend
+│   │   ├── cmd/
+│   │   │   ├── server/         # Main API server
+│   │   │   ├── migrate/        # Database migrations
+│   │   │   ├── cli/            # CLI tool
+│   │   │   └── ui/             # Web UI
+│   │   ├── internal/
+│   │   │   ├── auth/           # JWT & password hashing
+│   │   │   ├── tenant/         # Multi-tenancy
+│   │   │   ├── user/           # User management
+│   │   │   ├── car/            # Vehicle management
+│   │   │   └── database/       # DB connection
+│   │   └── migrations/         # SQL migrations
+│   ├── web/                    # React dashboard (Coming soon)
+│   └── admin/                  # Admin dashboard (Coming soon)
+├── libs/                       # Shared libraries
+├── infra/
+│   └── docker/                 # Dockerfiles
+└── scripts/                    # Utility scripts
+```
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Go 1.21 or higher
-- Make (optional, for using Makefile commands)
-- Docker (optional, for containerization)
-- GCP account (optional, for cloud deployment)
+- **Docker** & **Docker Compose** (required)
+- **Go 1.22+** (for local development)
+- **Node.js 18+** (for frontend development)
 
-### Local Development
+### 🎯 **One-Command Setup**
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/joshbarros/golang-carflow-api.git
-   cd golang-carflow-api
-   ```
-
-2. Build and run the service:
-   ```bash
-   make build
-   make run
-   ```
-
-   Or without Make:
-   ```bash
-   go build -o carflow ./cmd
-   ./carflow
-   ```
-
-3. The service will be available at `http://localhost:8080`
-
-### Using the CLI
-
-CarFlow comes with a command-line interface for easy interaction with the API:
-
-1. Build the CLI:
-   ```bash
-   make build-cli
-   ```
-
-2. Run CLI commands:
-   ```bash
-   # Show all commands
-   ./carflow-cli help
-   
-   # List all cars
-   ./carflow-cli list
-   
-   # Get a specific car
-   ./carflow-cli get -id "1"
-   
-   # Create a new car
-   ./carflow-cli create -make "Toyota" -model "Supra" -year 2022 -color "red"
-   
-   # Update a car
-   ./carflow-cli update -id "1" -color "blue"
-   
-   # Delete a car
-   ./carflow-cli delete -id "1"
-   
-   # Check API health
-   ./carflow-cli health
-   ```
-
-### Using the Web UI
-
-CarFlow also includes a web-based user interface:
-
-1. Build the UI:
-   ```bash
-   make build-ui
-   ```
-
-2. Run the UI:
-   ```bash
-   make run-ui
-   ```
-
-3. Access the UI in your browser at `http://localhost:3000`
-
-## 📡 API Endpoints
-
-| Method | Path         | Description        | Status Codes      |
-|--------|--------------|--------------------|-------------------|
-| GET    | `/cars`      | List all cars      | 200               |
-| GET    | `/cars/{id}` | Get car by ID      | 200, 404          |
-| POST   | `/cars`      | Create new car     | 201, 400          |
-| PUT    | `/cars/{id}` | Update existing    | 200, 400, 404     |
-| DELETE | `/cars/{id}` | Delete existing    | 204, 404          |
-| GET    | `/metrics`   | Service metrics    | 200               |
-| GET    | `/healthz`   | Health check       | 200               |
-| GET    | `/api-docs`  | API documentation  | 200               |
-
-## 📦 API Examples
-
-### Create a car
 ```bash
-curl -X POST http://localhost:8080/cars \
+# Clone the repository
+git clone https://github.com/joshbarros/golang-carflow-api.git
+cd golang-carflow-api
+
+# Start everything (PostgreSQL + Redis + API)
+./scripts/start-dev.sh
+```
+
+**That's it!** 🎉
+
+The script will:
+1. ✅ Create `.env` from `.env.example`
+2. ✅ Start PostgreSQL, Redis, and the API
+3. ✅ Run database migrations
+4. ✅ Seed demo data
+
+### 📍 **Access Points**
+
+Once running, access:
+
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| **API** | http://localhost:8080 | - |
+| **API Docs** | http://localhost:8080/api-docs | - |
+| **Health Check** | http://localhost:8080/healthz | - |
+| **Metrics** | http://localhost:8080/metrics | - |
+| **PgAdmin** | http://localhost:5050 | admin@carflow.local / admin |
+| **Redis Commander** | http://localhost:8081 | - |
+| **MailHog** | http://localhost:8025 | - |
+
+### 🧪 **Demo Credentials**
+
+Test the API with pre-seeded data:
+
+```
+Tenant:   demo-dealership
+Email:    owner@demo-dealership.com
+Password: password123
+```
+
+---
+
+## 🐳 Docker Commands
+
+### Development
+
+```bash
+# Start with dev tools (PgAdmin, MailHog, etc.)
+./scripts/start-dev.sh
+
+# View logs
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml logs -f
+
+# Stop everything
+./scripts/stop.sh
+```
+
+### Production
+
+```bash
+# Start production stack
+./scripts/start.sh
+
+# View logs
+docker-compose logs -f
+
+# Stop
+docker-compose down
+```
+
+### Database Management
+
+```bash
+# Run migrations
+./scripts/db.sh migrate
+
+# Rollback last migration
+./scripts/db.sh migrate-down
+
+# Reset database (WARNING: deletes all data)
+./scripts/db.sh reset
+
+# Seed demo data
+./scripts/db.sh seed
+
+# Open PostgreSQL shell
+./scripts/db.sh shell
+
+# Create backup
+./scripts/db.sh backup
+
+# Restore from backup
+./scripts/db.sh restore backups/carflow_20231123_120000.sql
+```
+
+---
+
+## 🔧 Local Development (Without Docker)
+
+### 1. Install PostgreSQL
+
+```bash
+# macOS
+brew install postgresql@15
+brew services start postgresql@15
+
+# Ubuntu/Debian
+sudo apt install postgresql-15
+sudo systemctl start postgresql
+```
+
+### 2. Create Database
+
+```bash
+createdb carflow
+```
+
+### 3. Configure Environment
+
+```bash
+cp .env.example .env
+# Edit .env with your local database credentials
+```
+
+### 4. Run Migrations
+
+```bash
+cd apps/api
+go run ./cmd/migrate -database "postgres://carflow:carflow123@localhost:5432/carflow?sslmode=disable" -path ./migrations
+```
+
+### 5. Start API Server
+
+```bash
+cd apps/api
+go run ./cmd/server
+```
+
+---
+
+## 📊 Database Schema
+
+CarFlow uses a **multi-tenant PostgreSQL** database with the following tables:
+
+| Table | Description |
+|-------|-------------|
+| `tenants` | Dealership/company accounts |
+| `users` | User accounts with RBAC |
+| `api_keys` | API keys for integrations |
+| `cars` | Vehicle inventory (tenant-isolated) |
+| `subscriptions` | Stripe subscription data |
+| `usage_tracking` | API usage & billing metrics |
+| `audit_logs` | Complete change history |
+
+**Key Features:**
+- ✅ UUID primary keys
+- ✅ Soft deletes
+- ✅ Automatic timestamps
+- ✅ JSONB for flexible metadata
+- ✅ Comprehensive indexing
+
+---
+
+## 🔐 Authentication
+
+CarFlow uses **JWT (JSON Web Tokens)** for authentication.
+
+### Register New Tenant (Coming Soon)
+
+```bash
+POST /api/v1/auth/register
+Content-Type: application/json
+
+{
+  "dealership_name": "ABC Motors",
+  "owner_email": "owner@abcmotors.com",
+  "owner_password": "securepassword123",
+  "owner_first_name": "John",
+  "owner_last_name": "Doe"
+}
+```
+
+### Login
+
+```bash
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "owner@demo-dealership.com",
+  "password": "password123"
+}
+
+# Response:
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {...}
+}
+```
+
+### Use Token
+
+```bash
+GET /api/v1/cars
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+---
+
+## 🚗 API Examples
+
+### List All Vehicles
+
+```bash
+curl -X GET "http://localhost:8080/api/v1/cars" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Get Vehicle Details
+
+```bash
+curl -X GET "http://localhost:8080/api/v1/cars/car-001" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### Create New Vehicle
+
+```bash
+curl -X POST "http://localhost:8080/api/v1/cars" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"make":"Tesla","model":"Model 3","year":2022,"color":"red"}'
+  -d '{
+    "id": "car-new-001",
+    "make": "Toyota",
+    "model": "Camry",
+    "year": 2024,
+    "color": "Silver",
+    "vin": "1HGCM82633A789012",
+    "stock_number": "STK-1234",
+    "price": 32999.00,
+    "mileage": 0,
+    "status": "available",
+    "description": "Brand new 2024 Toyota Camry"
+  }'
 ```
 
-### Get all cars
+### Filter & Search
+
 ```bash
-curl http://localhost:8080/cars
+# Filter by make and status
+curl "http://localhost:8080/api/v1/cars?make=Toyota&status=available"
+
+# Pagination
+curl "http://localhost:8080/api/v1/cars?page=1&page_size=10"
+
+# Sort
+curl "http://localhost:8080/api/v1/cars?sort_by=price&sort_order=desc"
 ```
 
-### Get a specific car
-```bash
-curl http://localhost:8080/cars/{id}
-```
+---
 
-### Update a car
-```bash
-curl -X PUT http://localhost:8080/cars/{id} \
-  -H "Content-Type: application/json" \
-  -d '{"make":"Tesla","model":"Model 3","year":2023,"color":"blue"}'
-```
+## 💰 Pricing & Plans
 
-### Filter and Sort
-```bash
-# Filter by make and sort by year descending
-curl "http://localhost:8080/cars?make=Tesla&sort=year&order=desc"
-```
+| Plan | Price/Month | Vehicles | Users | API Calls |
+|------|-------------|----------|-------|-----------|
+| **Starter** | $29 | 100 | 3 | 10,000/mo |
+| **Professional** | $99 | 1,000 | 10 | 100,000/mo |
+| **Enterprise** | $299 | Unlimited | Unlimited | Unlimited |
 
-### Pagination
-```bash
-# Get page 2 with 5 items per page
-curl "http://localhost:8080/cars?page=2&page_size=5"
-```
+---
+
+## 📈 Roadmap
+
+See [ROADMAP.MD](./ROADMAP.MD) for the complete 90-day SaaS transformation plan.
+
+### ✅ **Completed (Week 1)**
+- NX Monorepo setup
+- PostgreSQL database with migrations
+- Multi-tenancy architecture
+- JWT authentication
+- Role-based access control
+- Enhanced vehicle management
+- Docker Compose setup
+
+### 🔄 **In Progress (Week 2)**
+- React dashboard with signup/login
+- Stripe payment integration
+- Brevo email service
+- User registration endpoints
+
+### 📅 **Coming Soon**
+- Admin dashboard
+- Webhook system
+- Advanced analytics
+- Mobile apps
+- Marketplace features
+
+---
 
 ## 🧪 Testing
 
-Run tests with:
 ```bash
-make test
+# Run all tests
+cd apps/api
+go test ./...
+
+# Run with coverage
+go test -cover ./...
+
+# Run specific package
+go test ./internal/car/...
+
+# Benchmark tests
+go test -bench=. ./...
 ```
 
-Or without Make:
-```bash
-go test ./... -v
-```
+---
 
-Run benchmarks with:
-```bash
-go test -bench=. -benchmem ./test
-```
+## 📚 Documentation
 
-## ☁️ Deployment Options
+- **[ROADMAP.MD](./ROADMAP.MD)** - Complete 90-day SaaS roadmap
+- **[ARCHITECTURE.MD](./ARCHITECTURE.MD)** - Detailed architecture docs
+- **[SAAS.MD](./SAAS.MD)** - SaaS transformation plan
+- **[API Docs](http://localhost:8080/api-docs)** - OpenAPI 3.0 specification
 
-There are several ways to deploy the CarFlow API:
+---
 
-### Local Deployment
+## 🤝 Contributing
 
-Run the application on your local machine:
-```bash
-go build -o carflow ./cmd
-./carflow
-```
+Contributions are welcome! Please:
 
-### Docker Deployment
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-1. Build the Docker image:
-   ```bash
-   docker build -t carflow:latest .
-   ```
+---
 
-2. Run the container:
-   ```bash
-   docker run -p 8080:8080 carflow:latest
-   ```
+## 📝 License
 
-### GCP Free Tier Deployment
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-You can deploy the API to Google Cloud Run using the free tier:
+---
 
-1. Set up GCP project with spending controls:
-   ```bash
-   # Create a new GCP project
-   gcloud projects create carflow-api-project --name="CarFlow API"
-   
-   # Link billing account (required, but set spending limit to $0)
-   gcloud billing projects link carflow-api-project --billing-account=YOUR_BILLING_ACCOUNT_ID
-   ```
+## 🙏 Acknowledgments
 
-2. Enable required APIs and create resources:
-   ```bash
-   # Enable APIs
-   gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com
-   
-   # Create Docker repository
-   gcloud artifacts repositories create carflow-repo \
-     --repository-format=docker \
-     --location=us-central1
-   ```
+Built with ❤️ using:
+- [Go](https://golang.org/) - Backend language
+- [PostgreSQL](https://www.postgresql.org/) - Database
+- [Redis](https://redis.io/) - Caching
+- [Docker](https://www.docker.com/) - Containerization
+- [NX](https://nx.dev/) - Monorepo tools
 
-3. Deploy using Cloud Build:
-   ```bash
-   # Trigger build and deployment
-   gcloud builds submit --config=cloudbuild.yaml
-   ```
+---
 
-The Cloud Run service will auto-scale to zero when not in use, helping you stay within free tier limits. For detailed instructions, see [GCP Free Tier Deployment Guide](docs/gcp-free-deployment.md).
+## 💬 Support
 
-### GitHub Pages for UI
+- 📧 Email: support@carflow.com
+- 🐛 Issues: [GitHub Issues](https://github.com/joshbarros/golang-carflow-api/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/joshbarros/golang-carflow-api/discussions)
 
-You can deploy the web UI component to GitHub Pages:
-```bash
-# Create a gh-pages branch
-git checkout -b gh-pages
+---
 
-# Build the UI
-go build -o carflow-ui ./cmd/ui
-
-# Copy UI assets to root
-cp -r cmd/ui/templates/* .
-
-# Push to GitHub
-git add .
-git commit -m "Add GitHub Pages deployment"
-git push origin gh-pages
-```
-
-## 🔄 CI/CD
-
-The project uses GitHub Actions for continuous integration and deployment:
-
-### CI Workflow
-
-The CI workflow runs on every push and pull request to the main branch:
-- Lints the code with golangci-lint
-- Runs unit and integration tests
-- Reports code coverage
-
-### GCP Deployment with Cloud Build
-
-Cloud Build can be configured to automatically deploy changes when you push to the main branch:
-
-1. Connect GitHub repository to Cloud Build
-2. Configure trigger to watch the main branch
-3. Use the provided `cloudbuild.yaml` for deployment configuration
-
-## 📂 Project Structure
-
-```
-/cmd
-  main.go                   # API entry point
-  /cli
-    main.go                 # CLI entry point
-    README.md               # CLI documentation
-  /ui
-    main.go                 # Web UI entry point
-    README.md               # UI documentation
-    /templates              # HTML templates
-      layout.html           # Base template
-      home.html             # Home page
-      list.html             # Car listing page
-      view.html             # Car details page
-      new.html              # Create car form
-      edit.html             # Edit car form
-      delete.html           # Delete confirmation
-      error.html            # Error page
-      /static               # Static assets
-        /css                # CSS styles
-        /js                 # JavaScript files
-/internal
-  /car
-    handler.go             # HTTP handlers
-    service.go             # Business logic
-    storage.go             # In-memory DB logic
-    model.go               # Entity struct
-  /middleware
-    logger.go              # Logging middleware
-    recovery.go            # Panic recovery
-    ratelimit.go           # Rate limiting
-    etag.go                # ETag support
-  /metrics
-    metrics.go             # Custom metrics tracking
-    handler.go             # Metrics endpoint
-  /health
-    health.go              # Healthcheck handler
-  /cache
-    cache.go               # Caching mechanism
-/docs
-  openapi.json             # OpenAPI 3.0 Spec
-  gcp-free-deployment.md   # GCP free tier deployment guide
-/test
-  car_test.go              # Integration tests
-  service_test.go          # Unit tests
-  benchmark_test.go        # Performance benchmarks
-/terraform
-  main.tf                  # Terraform configuration
-  variables.tf             # Terraform variables
-  terraform.tfvars         # Terraform variable values
-  README.md                # Deployment options documentation
-/.github
-  /workflows
-    ci.yml                 # CI workflow
-    cd.yml                 # CD workflow
-    pages.yml              # GitHub Pages deployment
-cloudbuild.yaml            # Cloud Build configuration
-```
-
-## 📄 License
-
-[MIT License](LICENSE) 
+**Made with 🚗 by the CarFlow Team**

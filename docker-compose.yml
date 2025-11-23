@@ -1,20 +1,113 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: carflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-carflow}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-carflow123}
+      POSTGRES_DB: ${DB_NAME:-carflow}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-carflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - carflow-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: carflow-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - carflow-network
+
+  # CarFlow API
   api:
     build:
       context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      - PORT=8080
-    volumes:
-      - ./docs:/app/docs
+      dockerfile: infra/docker/api.Dockerfile
+    container_name: carflow-api
     restart: unless-stopped
+    environment:
+      # Server
+      PORT: ${PORT:-8080}
+
+      # Database
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-carflow}
+      DB_PASSWORD: ${DB_PASSWORD:-carflow123}
+      DB_NAME: ${DB_NAME:-carflow}
+      DB_SSLMODE: disable
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+
+      # Rate Limiting
+      RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+      RATE_LIMIT_RPS: ${RATE_LIMIT_RPS:-100}
+
+      # CORS
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
+    ports:
+      - "${PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 5s 
+      start_period: 40s
+    networks:
+      - carflow-network
+
+  # Migration runner (runs once and exits)
+  migrate:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    container_name: carflow-migrate
+    command: ["/app/migrate", "-database", "postgres://carflow:carflow123@postgres:5432/carflow?sslmode=disable", "-path", "/app/migrations"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - carflow-network
+    restart: "no"
+
+networks:
+  carflow-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local 
