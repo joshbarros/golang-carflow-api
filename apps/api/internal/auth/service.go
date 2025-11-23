@@ -23,17 +23,24 @@ var (
 	ErrInvalidEmail = errors.New("invalid email format")
 )
 
+// EmailService defines the interface for sending emails
+type EmailService interface {
+	SendWelcomeEmail(to, firstName, dealershipName string) error
+}
+
 // Service handles authentication business logic
 type Service struct {
-	userRepo   user.Repository
-	tenantRepo tenant.Repository
+	userRepo     user.Repository
+	tenantRepo   tenant.Repository
+	emailService EmailService
 }
 
 // NewService creates a new auth service
-func NewService(userRepo user.Repository, tenantRepo tenant.Repository) *Service {
+func NewService(userRepo user.Repository, tenantRepo tenant.Repository, emailService EmailService) *Service {
 	return &Service{
-		userRepo:   userRepo,
-		tenantRepo: tenantRepo,
+		userRepo:     userRepo,
+		tenantRepo:   tenantRepo,
+		emailService: emailService,
 	}
 }
 
@@ -162,6 +169,15 @@ func (s *Service) Register(req *RegisterRequest) (*RegisterResponse, error) {
 	token, err := GenerateToken(newUser.ID, newTenant.ID, newUser.Email, newUser.Role)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	// Send welcome email (don't fail registration if email fails)
+	if s.emailService != nil {
+		err = s.emailService.SendWelcomeEmail(newUser.Email, newUser.FirstName, newTenant.Name)
+		if err != nil {
+			// Log error but don't fail registration
+			fmt.Printf("Warning: Failed to send welcome email: %v\n", err)
+		}
 	}
 
 	return &RegisterResponse{

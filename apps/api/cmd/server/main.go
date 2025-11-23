@@ -12,6 +12,7 @@ import (
 	"github.com/joshbarros/golang-carflow-api/internal/cache"
 	"github.com/joshbarros/golang-carflow-api/internal/car"
 	"github.com/joshbarros/golang-carflow-api/internal/database"
+	"github.com/joshbarros/golang-carflow-api/internal/email"
 	"github.com/joshbarros/golang-carflow-api/internal/health"
 	"github.com/joshbarros/golang-carflow-api/internal/metrics"
 	"github.com/joshbarros/golang-carflow-api/internal/middleware"
@@ -61,8 +62,20 @@ func main() {
 	defaultTenantID := getEnv("DEFAULT_TENANT_ID", "550e8400-e29b-41d4-a716-446655440000")
 	carRepo := car.NewPostgresRepository(db, defaultTenantID)
 
+	// Initialize email service
+	log.Println("📧 Initializing email service...")
+	var emailService email.Service
+	brevoAPIKey := os.Getenv("BREVO_API_KEY")
+	if brevoAPIKey != "" {
+		emailService = email.NewBrevoService()
+		log.Println("✅ Brevo email service configured")
+	} else {
+		emailService = email.NewMockEmailService()
+		log.Println("⚠️  Using mock email service (BREVO_API_KEY not set)")
+	}
+
 	// Initialize services
-	authService := auth.NewService(userRepo, tenantRepo)
+	authService := auth.NewService(userRepo, tenantRepo, emailService)
 	carService := car.NewService(carRepo)
 
 	// Initialize handlers
