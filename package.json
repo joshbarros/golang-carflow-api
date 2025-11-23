@@ -1,0 +1,60 @@
+{
+  "name": "carflow-saas",
+  "version": "2.0.0",
+  "description": "CarFlow - B2B SaaS Platform for Car Dealerships",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "api:build": "cd apps/api && go build -o ../../dist/apps/api/server ./cmd/server",
+    "api:run": "cd apps/api && go run ./cmd/server",
+    "api:test": "cd apps/api && go test ./...",
+    "web:dev": "nx serve web",
+    "web:build": "nx build web",
+    "web:test": "nx test web",
+    "admin:dev": "nx serve admin",
+    "admin:build": "nx build admin",
+    "format": "nx format:write",
+    "lint": "nx run-many --target=lint --all",
+    "test": "nx run-many --target=test --all",
+    "build": "nx run-many --target=build --all",
+    "affected:build": "nx affected --target=build",
+    "affected:test": "nx affected --target=test"
+  },
+  "devDependencies": {
+    "@nx/eslint": "^22.1.1",
+    "@nx/js": "^22.1.1",
+    "@nx/react": "^22.1.1",
+    "@nx/vite": "^22.1.1",
+    "@nx/workspace": "^22.1.1",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "nx": "^22.1.1",
+    "postcss": "^8.4.49",
+    "prettier": "^3.4.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "vitest": "^2.0.0"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.62.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-router-dom": "^7.1.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ]
+}

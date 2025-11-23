@@ -1,0 +1,45 @@
+{{define "content"}}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Edit Car</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" action="/cars/edit/{{.Car.ID}}">
+                    <div class="mb-3">
+                        <label for="id" class="form-label">ID</label>
+                        <input type="text" class="form-control" id="id" value="{{.Car.ID}}" readonly>
+                        <div class="form-text">ID cannot be changed.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="make" class="form-label">Make</label>
+                        <input type="text" class="form-control" id="make" name="make" value="{{.Car.Make}}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="model" class="form-label">Model</label>
+                        <input type="text" class="form-control" id="model" name="model" value="{{.Car.Model}}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="year" class="form-label">Year</label>
+                        <input type="number" class="form-control" id="year" name="year" value="{{.Car.Year}}" required min="1900" max="2100">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Color</label>
+                        <input type="text" class="form-control" id="color" name="color" value="{{.Car.Color}}" required>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/cars/view/{{.Car.ID}}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Update Car</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}} 

@@ -1,0 +1,131 @@
+{{define "content"}}
+<h1 class="mb-4">Cars</h1>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Filter and Sort</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" action="/cars" class="row g-3">
+                    <div class="col-md-2">
+                        <label for="make" class="form-label">Make</label>
+                        <select name="make" id="make" class="form-select">
+                            <option value="">All Makes</option>
+                            {{range .Makes}}
+                            <option value="{{.}}" {{if eq . $.FilterMake}}selected{{end}}>{{.}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="color" class="form-label">Color</label>
+                        <select name="color" id="color" class="form-select">
+                            <option value="">All Colors</option>
+                            {{range .Colors}}
+                            <option value="{{.}}" {{if eq . $.FilterColor}}selected{{end}}>{{.}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="year" class="form-label">Year</label>
+                        <select name="year" id="year" class="form-select">
+                            <option value="">All Years</option>
+                            {{range .Years}}
+                            <option value="{{.}}" {{if eq . $.FilterYear}}selected{{end}}>{{.}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="sort" class="form-label">Sort By</label>
+                        <select name="sort" id="sort" class="form-select">
+                            <option value="">None</option>
+                            <option value="make" {{if eq .SortField "make"}}selected{{end}}>Make</option>
+                            <option value="model" {{if eq .SortField "model"}}selected{{end}}>Model</option>
+                            <option value="year" {{if eq .SortField "year"}}selected{{end}}>Year</option>
+                            <option value="color" {{if eq .SortField "color"}}selected{{end}}>Color</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="order" class="form-label">Order</label>
+                        <select name="order" id="order" class="form-select">
+                            <option value="asc" {{if eq .SortOrder "asc"}}selected{{end}}>Ascending</option>
+                            <option value="desc" {{if eq .SortOrder "desc"}}selected{{end}}>Descending</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Apply</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{if .Cars}}
+<div class="row">
+    {{range .Cars}}
+    <div class="col-md-4">
+        <div class="card car-card">
+            <div class="card-body">
+                <h5 class="card-title">{{.Make}} {{.Model}}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{.Year}} - {{.Color}}</h6>
+                <p class="card-text">ID: {{.ID}}</p>
+                <div class="btn-group">
+                    <a href="/cars/view/{{.ID}}" class="btn btn-outline-primary">View</a>
+                    <a href="/cars/edit/{{.ID}}" class="btn btn-outline-secondary">Edit</a>
+                    <a href="/cars/delete/{{.ID}}" class="btn btn-outline-danger">Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{end}}
+</div>
+
+{{if gt .TotalPages 1}}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {{if gt .CurrentPage 1}}
+        <li class="page-item">
+            <a class="page-link" href="/cars?page={{subtract .CurrentPage 1}}&page_size={{.PageSize}}&make={{.FilterMake}}&color={{.FilterColor}}&year={{.FilterYear}}&sort={{.SortField}}&order={{.SortOrder}}">Previous</a>
+        </li>
+        {{else}}
+        <li class="page-item disabled">
+            <span class="page-link">Previous</span>
+        </li>
+        {{end}}
+        
+        {{range $i := sequence 1 .TotalPages}}
+        <li class="page-item {{if eq $i $.CurrentPage}}active{{end}}">
+            <a class="page-link" href="/cars?page={{$i}}&page_size={{$.PageSize}}&make={{$.FilterMake}}&color={{$.FilterColor}}&year={{$.FilterYear}}&sort={{$.SortField}}&order={{$.SortOrder}}">{{$i}}</a>
+        </li>
+        {{end}}
+        
+        {{if lt .CurrentPage .TotalPages}}
+        <li class="page-item">
+            <a class="page-link" href="/cars?page={{add .CurrentPage 1}}&page_size={{.PageSize}}&make={{.FilterMake}}&color={{.FilterColor}}&year={{.FilterYear}}&sort={{.SortField}}&order={{.SortOrder}}">Next</a>
+        </li>
+        {{else}}
+        <li class="page-item disabled">
+            <span class="page-link">Next</span>
+        </li>
+        {{end}}
+    </ul>
+</nav>
+{{end}}
+
+{{else}}
+<div class="alert alert-info">
+    No cars found. <a href="/cars/new" class="alert-link">Add a new car</a>.
+</div>
+{{end}}
+
+<div class="text-center mt-4">
+    <a href="/cars/new" class="btn btn-success">Add New Car</a>
+</div>
+{{end}} 

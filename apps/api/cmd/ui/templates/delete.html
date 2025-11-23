@@ -1,0 +1,52 @@
+{{define "content"}}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h3 class="mb-0">Delete Car</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <h4 class="alert-heading">Warning!</h4>
+                    <p>Are you sure you want to delete this car? This action cannot be undone.</p>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">{{.Car.Make}} {{.Car.Model}}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-md-4 fw-bold">ID:</div>
+                            <div class="col-md-8">{{.Car.ID}}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-4 fw-bold">Make:</div>
+                            <div class="col-md-8">{{.Car.Make}}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-4 fw-bold">Model:</div>
+                            <div class="col-md-8">{{.Car.Model}}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-4 fw-bold">Year:</div>
+                            <div class="col-md-8">{{.Car.Year}}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-4 fw-bold">Color:</div>
+                            <div class="col-md-8">{{.Car.Color}}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="post" action="/cars/delete/{{.Car.ID}}">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="/cars/view/{{.Car.ID}}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Delete Car</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}} 

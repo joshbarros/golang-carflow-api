@@ -1,0 +1,38 @@
+{{define "content"}}
+<div class="text-center my-5">
+    <h1 class="display-4">Welcome to CarFlow</h1>
+    <p class="lead">A simple API for managing car information</p>
+    
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Browse Cars</h5>
+                    <p class="card-text">View the full collection of cars, with options for filtering and sorting.</p>
+                    <a href="/cars" class="btn btn-primary">View Cars</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Add a Car</h5>
+                    <p class="card-text">Register a new car by providing make, model, year, and color information.</p>
+                    <a href="/cars/new" class="btn btn-success">Add Car</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">API Status</h5>
+                    <p class="card-text">The CarFlow API is currently operational and ready to use.</p>
+                    <a href="http://localhost:8080/healthz" class="btn btn-secondary" target="_blank">View API Health</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}} 
