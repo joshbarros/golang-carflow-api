@@ -16,6 +16,7 @@ import (
 	"github.com/joshbarros/golang-carflow-api/internal/health"
 	"github.com/joshbarros/golang-carflow-api/internal/metrics"
 	"github.com/joshbarros/golang-carflow-api/internal/middleware"
+	"github.com/joshbarros/golang-carflow-api/internal/subscription"
 	"github.com/joshbarros/golang-carflow-api/internal/tenant"
 	"github.com/joshbarros/golang-carflow-api/internal/user"
 )
@@ -74,6 +75,14 @@ func main() {
 		log.Println("⚠️  Using mock email service (BREVO_API_KEY not set)")
 	}
 
+	// Initialize subscription repository
+	subscriptionRepo := subscription.NewPostgresRepository(db)
+
+	// Initialize Stripe service
+	log.Println("💳 Initializing Stripe service...")
+	stripeService := subscription.NewStripeService(subscriptionRepo, emailService)
+	log.Println("✅ Stripe service configured")
+
 	// Initialize services
 	authService := auth.NewService(userRepo, tenantRepo, emailService)
 	carService := car.NewService(carRepo)
@@ -81,6 +90,7 @@ func main() {
 	// Initialize handlers
 	authHandler := auth.NewHandler(authService)
 	carHandler := car.NewHandler(carService)
+	subscriptionHandler := subscription.NewHandler(stripeService, subscriptionRepo)
 	healthHandler := health.NewHandler()
 
 	// Create rate limiter
@@ -128,6 +138,18 @@ func main() {
 	mux.Handle("POST /api/v1/cars", middleware.JWTMiddleware(http.HandlerFunc(carHandler.CreateCar)))
 	mux.Handle("PUT /api/v1/cars/{id}", middleware.JWTMiddleware(http.HandlerFunc(carHandler.UpdateCar)))
 	mux.Handle("DELETE /api/v1/cars/{id}", middleware.JWTMiddleware(http.HandlerFunc(carHandler.DeleteCar)))
+
+	// Subscription endpoints (protected)
+	mux.Handle("POST /api/v1/subscriptions/checkout", middleware.JWTMiddleware(http.HandlerFunc(subscriptionHandler.CreateCheckoutSession)))
+	mux.Handle("GET /api/v1/subscriptions/current", middleware.JWTMiddleware(http.HandlerFunc(subscriptionHandler.GetSubscription)))
+	mux.Handle("POST /api/v1/subscriptions/cancel", middleware.JWTMiddleware(http.HandlerFunc(subscriptionHandler.CancelSubscription)))
+
+	// ==========================================
+	// Webhook Endpoints (Public - No auth)
+	// ==========================================
+
+	// Stripe webhook (public endpoint - Stripe will call this)
+	mux.HandleFunc("POST /api/v1/webhooks/stripe", subscriptionHandler.StripeWebhook)
 
 	// ==========================================
 	// Middleware Chain
@@ -180,6 +202,14 @@ func main() {
 	log.Printf("   Create:         POST   http://localhost%s/api/v1/cars", addr)
 	log.Printf("   Update:         PUT    http://localhost%s/api/v1/cars/{{id}}", addr)
 	log.Printf("   Delete:         DELETE http://localhost%s/api/v1/cars/{{id}}", addr)
+	log.Println("")
+	log.Println("💳 Subscriptions (Protected):")
+	log.Printf("   Checkout:       POST   http://localhost%s/api/v1/subscriptions/checkout", addr)
+	log.Printf("   Get Current:    GET    http://localhost%s/api/v1/subscriptions/current", addr)
+	log.Printf("   Cancel:         POST   http://localhost%s/api/v1/subscriptions/cancel", addr)
+	log.Println("")
+	log.Println("🔔 Webhooks (Public):")
+	log.Printf("   Stripe:         POST   http://localhost%s/api/v1/webhooks/stripe", addr)
 	log.Println("")
 	log.Printf("🚀 Server listening on http://localhost%s", addr)
 	log.Println("Press Ctrl+C to stop")

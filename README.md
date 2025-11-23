@@ -256,7 +256,7 @@ CarFlow uses a **multi-tenant PostgreSQL** database with the following tables:
 
 CarFlow uses **JWT (JSON Web Tokens)** for authentication.
 
-### Register New Tenant (Coming Soon)
+### Register New Tenant
 
 ```bash
 POST /api/v1/auth/register
@@ -350,6 +350,168 @@ curl "http://localhost:8080/api/v1/cars?sort_by=price&sort_order=desc"
 
 ---
 
+## 💳 Stripe Subscription Management
+
+CarFlow integrates with **Stripe Checkout** for subscription billing and payment processing.
+
+### 🔑 Setup Stripe Integration
+
+1. **Create a Stripe Account**
+   - Sign up at [stripe.com](https://stripe.com)
+   - Get your API keys from the Stripe Dashboard
+
+2. **Configure Environment Variables**
+
+```bash
+# Add to your .env file
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# Create products in Stripe and add price IDs
+STRIPE_PRICE_STARTER=price_starter_id
+STRIPE_PRICE_PROFESSIONAL=price_professional_id
+STRIPE_PRICE_ENTERPRISE=price_enterprise_id
+```
+
+3. **Create Stripe Products**
+
+In your Stripe Dashboard, create three products:
+- **Starter**: $29/month (100 vehicles, 3 users)
+- **Professional**: $99/month (500 vehicles, 10 users)
+- **Enterprise**: $299/month (unlimited)
+
+Copy the price IDs and add them to your `.env` file.
+
+### 🛒 Subscription Endpoints
+
+#### Create Checkout Session
+
+```bash
+POST /api/v1/subscriptions/checkout
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "plan": "professional",
+  "success_url": "http://localhost:3000/billing/success",
+  "cancel_url": "http://localhost:3000/billing"
+}
+
+# Response:
+{
+  "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_..."
+}
+```
+
+#### Get Current Subscription
+
+```bash
+GET /api/v1/subscriptions/current
+Authorization: Bearer YOUR_TOKEN
+
+# Response:
+{
+  "id": "sub_123...",
+  "tenant_id": "550e8400...",
+  "plan": "professional",
+  "status": "active",
+  "current_period_end": "2024-01-15T00:00:00Z"
+}
+```
+
+#### Cancel Subscription
+
+```bash
+POST /api/v1/subscriptions/cancel
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "cancel_immediately": false  # true = cancel now, false = cancel at period end
+}
+```
+
+### 🔔 Stripe Webhooks
+
+CarFlow handles the following Stripe webhook events:
+
+| Event | Action |
+|-------|--------|
+| `checkout.session.completed` | Create subscription in database |
+| `customer.subscription.created` | Activate subscription |
+| `customer.subscription.updated` | Update subscription status |
+| `customer.subscription.deleted` | Mark subscription as canceled |
+| `invoice.payment_succeeded` | Send payment confirmation email |
+| `invoice.payment_failed` | Send payment failure notification |
+
+#### Setup Webhook Forwarding (Development)
+
+```bash
+# Install Stripe CLI
+brew install stripe/stripe-cli/stripe
+
+# Login to Stripe
+stripe login
+
+# Forward webhooks to your local server
+stripe listen --forward-to localhost:8080/api/v1/webhooks/stripe
+
+# Copy the webhook signing secret to .env
+STRIPE_WEBHOOK_SECRET=whsec_xxx...
+```
+
+#### Configure Webhooks (Production)
+
+1. Go to Stripe Dashboard → Webhooks
+2. Add endpoint: `https://yourdomain.com/api/v1/webhooks/stripe`
+3. Select events:
+   - `checkout.session.completed`
+   - `customer.subscription.*`
+   - `invoice.payment_*`
+4. Copy webhook signing secret to production `.env`
+
+### 🧪 Test Subscription Flow
+
+```bash
+# Run the subscription test script
+./scripts/test-subscriptions.sh
+
+# Or test manually
+# 1. Register a new account
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"dealership_name":"Test Motors","owner_email":"test@motors.com","owner_password":"password123","owner_first_name":"John","owner_last_name":"Doe"}'
+
+# 2. Create checkout session
+curl -X POST http://localhost:8080/api/v1/subscriptions/checkout \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"plan":"professional","success_url":"http://localhost:3000/success","cancel_url":"http://localhost:3000/billing"}'
+
+# 3. Visit the checkout_url to complete payment (use test card: 4242 4242 4242 4242)
+
+# 4. Check subscription status
+curl -X GET http://localhost:8080/api/v1/subscriptions/current \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+### 💡 Stripe Test Cards
+
+Use these test cards in development:
+
+| Card Number | Description |
+|-------------|-------------|
+| `4242 4242 4242 4242` | Successful payment |
+| `4000 0000 0000 0341` | Requires authentication |
+| `4000 0000 0000 0002` | Card declined |
+
+**Expiry:** Any future date
+**CVC:** Any 3 digits
+**ZIP:** Any 5 digits
+
+---
+
 ## 💰 Pricing & Plans
 
 | Plan | Price/Month | Vehicles | Users | API Calls |
@@ -364,7 +526,7 @@ curl "http://localhost:8080/api/v1/cars?sort_by=price&sort_order=desc"
 
 See [ROADMAP.MD](./ROADMAP.MD) for the complete 90-day SaaS transformation plan.
 
-### ✅ **Completed (Week 1)**
+### ✅ **Completed (Week 1-2)**
 - NX Monorepo setup
 - PostgreSQL database with migrations
 - Multi-tenancy architecture
@@ -372,12 +534,15 @@ See [ROADMAP.MD](./ROADMAP.MD) for the complete 90-day SaaS transformation plan.
 - Role-based access control
 - Enhanced vehicle management
 - Docker Compose setup
-
-### 🔄 **In Progress (Week 2)**
-- React dashboard with signup/login
 - Stripe payment integration
 - Brevo email service
 - User registration endpoints
+- Subscription management endpoints
+
+### 🔄 **In Progress (Week 3)**
+- React dashboard with signup/login
+- Admin dashboard
+- Usage tracking and analytics
 
 ### 📅 **Coming Soon**
 - Admin dashboard
